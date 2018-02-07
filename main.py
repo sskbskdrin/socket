@@ -113,6 +113,29 @@ def start():
         device.touch(_random.randint(360, 400), _random.randint(50, 100), md.UP)
         mr.sleep(1)
 
+        
+ def jump_s():
+    _random = random.Random()
+    device = mr.waitForConnection()
+        while True:
+        _data = urllib2.urlopen("http://localhost:8080/jump?l=100&t=600&w=900&h=720")
+
+        _result = json.loads(_data.read().decode("utf-8"))
+
+        x1 = _result['data']['user']['x']
+        y1 = _result['data']['user']['y']
+        x2 = _result['data']['target']['x']
+        y2 = _result['data']['target']['y']
+
+        _d = math.sqrt(math.pow(x1 - x2, 2) + math.pow(y1 - y2, 2))
+
+        _time = 0.0013 * _d + 0.03
+        _time = _d * 0.00135
+
+        device.touch(_random.randint(360, 400), _random.randint(50, 100), md.DOWN)
+        mr.sleep(_time)
+        device.touch(_random.randint(360, 400), _random.randint(50, 100), md.UP)
+        mr.sleep(5*_time)
 
 if __name__ == '__main__':
     print('start')
