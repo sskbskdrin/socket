@@ -2,28 +2,24 @@ package cn.sskbskdrin.service.http;
 
 import android.graphics.Bitmap;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import cn.sskbskdrin.service.http.business.Jump;
 import cn.sskbskdrin.service.utils.SysUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
-import io.netty.handler.codec.http.DefaultHttpMessage;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.QueryStringDecoder;
@@ -47,7 +43,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
         }
         if (response == null) {
             ByteBuf content = Unpooled.wrappedBuffer("{\"code\": 400,\"msg\": \"system error\",\"data\": null}"
-                .getBytes());
+                    .getBytes());
             response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, content);
             HttpHeaders heads = response.headers();
             heads.add(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes());
@@ -78,8 +74,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
         DefaultFullHttpResponse response = null;
         String uri = request.uri();
         QueryStringDecoder decoder = new QueryStringDecoder(request.uri());
+        Map<String, List<String>> params = decoder.parameters();
         if ("/screenshot".equals(decoder.path())) {
-            Map<String, List<String>> params = decoder.parameters();
             List<String> list = params.get("l");
             int l = 0, t = 0, h = 0, w = 0;
             if (list != null && list.size() > 0) {
@@ -109,7 +105,31 @@ public class HttpHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
                 bytes = bout.toByteArray();
             }
             response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled
-                .wrappedBuffer(bytes));
+                    .wrappedBuffer(bytes));
+            HttpHeaders heads = response.headers();
+            heads.add(HttpHeaderNames.CONTENT_TYPE, contentType + "; charset=UTF-8");
+            heads.add(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
+            heads.add(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+        } else if ("/jump".equals(decoder.path())) {
+            List<String> list = params.get("l");
+            int l = 0, t = 0, h = 0, w = 0;
+            if (list != null && list.size() > 0) {
+                l = SysUtil.parseInt(list.get(0));
+            }
+            list = params.get("t");
+            if (list != null && list.size() > 0) {
+                t = SysUtil.parseInt(list.get(0));
+            }
+            list = params.get("h");
+            if (list != null && list.size() > 0) {
+                h = SysUtil.parseInt(list.get(0));
+            }
+            list = params.get("w");
+            if (list != null && list.size() > 0) {
+                w = SysUtil.parseInt(list.get(0));
+            }
+            response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled
+                    .wrappedBuffer(Jump.get(l, t, w, h).getBytes()));
             HttpHeaders heads = response.headers();
             heads.add(HttpHeaderNames.CONTENT_TYPE, contentType + "; charset=UTF-8");
             heads.add(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
